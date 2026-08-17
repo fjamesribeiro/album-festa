@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#12101a">
+  <meta name="robots" content="noindex, nofollow">
   <title>Álbum da festa de {{NOME_ANIVERSARIANTE}}</title>
   <link rel="stylesheet" href="/estilo.css">
 </head>
 <body>
   <header class="cabecalho">
     <h1>Álbum da {{NOME_ANIVERSARIANTE}}</h1>
-    <p class="subtitulo">Manda as fotos que você tirou 💜</p>
+    <p class="contador" id="contador">carregando…</p>
   </header>
 
   <main class="conteudo">
@@ -26,17 +27,43 @@
     <button type="button" id="tentar-de-novo" class="botao-secundario" hidden>
       Tentar de novo só as que falharam
     </button>
+
+    <p id="aviso" class="aviso" role="alert" hidden></p>
+
+    <div id="vazio" class="vazio" hidden>
+      <p class="vazio-titulo">Ainda não tem nenhuma foto aqui</p>
+      <p>Que tal a sua ser a primeira? É só tocar no botão ali embaixo.</p>
+    </div>
+
+    <div id="grade" class="grade"></div>
+    <div id="sentinela" class="sentinela" aria-hidden="true"></div>
   </main>
 
-  <div class="barra-inferior">
-    <button type="button" id="enviar" class="botao-enviar">
-      <span id="rotulo-enviar">Enviar fotos</span>
-      <span id="progresso" class="progresso" hidden><i id="progresso-barra"></i></span>
-    </button>
-  </div>
+  <button type="button" id="enviar" class="botao-enviar">
+    <span class="progresso-fundo" aria-hidden="true"><i id="progresso-barra"></i></span>
+    <span id="rotulo-enviar" class="rotulo-enviar">Enviar fotos</span>
+  </button>
 
   <input type="file" id="arquivos" accept="image/*" multiple hidden>
 
-  <script src="/app.js"></script>
+  <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Foto" hidden>
+    <div class="lightbox-topo">
+      <span id="lightbox-posicao" class="lightbox-posicao"></span>
+      <a id="lightbox-baixar" class="lightbox-acao" href="#" download>Baixar</a>
+      <button type="button" id="lightbox-fechar" class="lightbox-acao" aria-label="Fechar">Fechar</button>
+    </div>
+
+    <div id="lightbox-palco" class="lightbox-palco">
+      <img id="lightbox-imagem" alt="">
+    </div>
+
+    <div class="lightbox-rodape">
+      <button type="button" id="lightbox-anterior" class="lightbox-seta" aria-label="Foto anterior">‹</button>
+      <p id="lightbox-legenda" class="lightbox-legenda"></p>
+      <button type="button" id="lightbox-proxima" class="lightbox-seta" aria-label="Próxima foto">›</button>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>

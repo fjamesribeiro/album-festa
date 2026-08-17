@@ -26,6 +26,17 @@ function texto(nome, padrao) {
   return bruto.trim();
 }
 
+function textoObrigatorio(nome, explicacao) {
+  const bruto = process.env[nome];
+  if (bruto === undefined || bruto.trim() === '') {
+    throw new Error(
+      `Variavel de ambiente ${nome} nao foi definida. ${explicacao}\n` +
+        'Copie o .env.example para .env e preencha antes de subir o servidor.'
+    );
+  }
+  return bruto.trim();
+}
+
 const dirDados = path.resolve(texto('DIR_DADOS', './dados'));
 const maxArquivoMb = inteiro('MAX_ARQUIVO_MB', 12);
 
@@ -34,6 +45,14 @@ const config = {
 
   // Aparece no cabecalho da pagina do convidado.
   nomeAniversariante: texto('NOME_ANIVERSARIANTE', 'a aniversariante'),
+
+  // Unica coisa entre o album e a internet inteira. Obrigatoria de proposito:
+  // um album que sobe desprotegido porque alguem esqueceu de definir a
+  // variavel e falha silenciosa, e o pior lugar para descobrir isso e a festa.
+  albumToken: textoObrigatorio(
+    'ALBUM_TOKEN',
+    'E o segredo que da acesso ao album, usado em /?k=TOKEN e no QR code da mesa.'
+  ),
 
   dirDados,
   dirBanco: path.join(dirDados, 'album.db'),

@@ -7,8 +7,10 @@ const express = require('express');
 
 const config = require('./config');
 const banco = require('./banco');
+const { exigirToken, NAO_ENCONTRADO } = require('./token');
 const rotasUpload = require('./rotas/upload');
 const rotasMidia = require('./rotas/midia');
+const rotasFotos = require('./rotas/fotos');
 
 const DIR_PUBLICO = path.join(__dirname, '..', 'publico');
 
@@ -49,10 +51,12 @@ app.set('trust proxy', config.trustProxy);
 app.disable('x-powered-by');
 app.disable('etag');
 
-app.get('/', (req, res) => {
+app.get('/', exigirToken, (req, res) => {
   res.type('html').send(paginaConvidado);
 });
 
+// CSS e JS ficam livres de token: sao codigo, nao revelam foto nenhuma nem a
+// existencia do album. Exigir token neles so quebraria o cache do navegador.
 app.use(
   express.static(DIR_PUBLICO, {
     index: false,
@@ -61,11 +65,12 @@ app.use(
   })
 );
 
+app.use(rotasFotos);
 app.use(rotasUpload);
 app.use(rotasMidia);
 
 app.use((req, res) => {
-  res.status(404).json({ erro: 'não encontrei essa página' });
+  res.status(404).json(NAO_ENCONTRADO);
 });
 
 // Erro nao tratado em qualquer rota: loga com contexto, responde em linguagem

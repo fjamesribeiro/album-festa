@@ -53,6 +53,34 @@ const contarPublicadas = banco.prepare(
   'SELECT COUNT(*) AS total FROM fotos WHERE hidden = 0'
 );
 
+// Paginacao por cursor composto, nunca por OFFSET: com OFFSET, uma foto nova
+// chegando entre duas paginas empurra o acervo e o convidado ve a mesma foto
+// duas vezes ou pula uma. As colunas e a ordem batem exatamente com o indice
+// idx_fotos_ordem, entao o SQLite percorre o indice sem ordenar nada.
+//
+// O campo ip NUNCA entra na projecao: e o unico dado do schema que nao pode
+// sair para o convidado.
+const CAMPOS_PUBLICOS = 'id, autor, largura, altura, criado_em, tirada_em';
+
+const listarPrimeiraPagina = banco.prepare(`
+  SELECT ${CAMPOS_PUBLICOS}
+    FROM fotos
+   WHERE hidden = 0
+   ORDER BY criado_em DESC, id DESC
+   LIMIT @limite
+`);
+
+// Varias fotos podem cair no mesmo milissegundo de criado_em durante um pico.
+// Por isso o desempate por id — sem ele a paginacao repete ou pula fotos.
+const listarAposCursor = banco.prepare(`
+  SELECT ${CAMPOS_PUBLICOS}
+    FROM fotos
+   WHERE hidden = 0
+     AND (criado_em < @criado_em OR (criado_em = @criado_em AND id < @id))
+   ORDER BY criado_em DESC, id DESC
+   LIMIT @limite
+`);
+
 // Fecha o banco de forma limpa no shutdown, senao o WAL fica pendente.
 function fechar() {
   try {
@@ -62,4 +90,11 @@ function fechar() {
   }
 }
 
-module.exports = { banco, inserirFoto, contarPublicadas, fechar };
+module.exports = {
+  banco,
+  inserirFoto,
+  contarPublicadas,
+  listarPrimeiraPagina,
+  listarAposCursor,
+  fechar,
+};

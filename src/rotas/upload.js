@@ -6,6 +6,7 @@ const express = require('express');
 const multer = require('multer');
 
 const config = require('../config');
+const { exigirToken } = require('../token');
 const { inserirFoto, contarPublicadas } = require('../banco');
 const { detectarFormato, gerarDerivadas, apagarSilencioso } = require('../imagem');
 
@@ -90,7 +91,9 @@ function validarTiradaEm(bruto) {
   return bruto.trim();
 }
 
-rotas.post('/api/upload', receberComTratamento, async (req, res) => {
+// O gate vem ANTES do multer: token errado e recusado sem que um byte de
+// arquivo chegue a tocar o disco.
+rotas.post('/api/upload', exigirToken, receberComTratamento, async (req, res) => {
   const arquivos = req.files ?? [];
 
   if (arquivos.length === 0) {
