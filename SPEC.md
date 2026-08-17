@@ -23,6 +23,9 @@ Não reabrir sem me perguntar:
 
 Antes de enviar, o navegador converte cada arquivo via `<canvas>`:
 
+- lê o `DateTimeOriginal` do EXIF **antes de converter** e envia no campo
+  `tirada_em` — o `<canvas>` apaga todo o metadado, então essa é a única
+  chance de saber quando a foto foi tirada
 - redimensiona para no máximo **2560px** no lado maior (não amplia)
 - exporta em **JPEG qualidade 0.90**
 - corrige a orientação a partir do EXIF antes de desenhar no canvas
@@ -41,7 +44,9 @@ CREATE TABLE fotos (
   bytes        INTEGER NOT NULL,
   largura      INTEGER,
   altura       INTEGER,
-  criado_em    TEXT NOT NULL,           -- ISO 8601 UTC
+  criado_em    TEXT NOT NULL,           -- ISO 8601 UTC, hora do envio
+  tirada_em    TEXT,                    -- captura, hora local sem fuso; NULL
+                                        -- quando a foto não tem EXIF
   ip           TEXT,
   hidden       INTEGER NOT NULL DEFAULT 0
 );
@@ -62,7 +67,10 @@ No upload, o `sharp` gera e grava em disco:
 | `view`  | JPEG    | 1600px, q82      | lightbox                |
 | `orig`  | como recebido | —          | botão de baixar         |
 
-Use `.withMetadata()` na derivada `view` para preservar data/hora do EXIF.
+A derivada `view` recebe `.withExif()` com a data vinda de `tirada_em` e
+`Orientation: 1` — não há EXIF de origem a preservar, porque o `<canvas>` do
+cliente já o descartou. O arquivo `orig` não é reescrito, mas seu `mtime` é
+ajustado para a data da foto, para o ZIP do admin sair na ordem certa.
 Concorrência máxima de 2 no processamento.
 
 Estrutura: `dados/midia/{thumb,view,orig}/{uuid}.{ext}` e `dados/album.db`.
