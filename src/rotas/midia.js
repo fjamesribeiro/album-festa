@@ -44,6 +44,16 @@ rotas.get('/media/:variante/:id', async (req, res) => {
     return res.status(404).json({ erro: 'foto não encontrada' });
   }
 
+  // O nome do arquivo e um UUID e o conteudo nunca muda, entao a resposta e
+  // imutavel de verdade: o celular do convidado baixa cada miniatura uma unica
+  // vez na noite inteira, mesmo recarregando a galeria.
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+  // Conteudo enviado por terceiro: o navegador nao pode adivinhar o tipo e
+  // resolver interpretar como HTML. O magic byte ja garante que so ha JPEG e
+  // PNG aqui, mas as duas defesas juntas custam um cabecalho.
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
   return res.sendFile(caminho, (erro) => {
     if (erro && !res.headersSent) {
       console.error('[midia] falha ao enviar arquivo', { caminho, erro: erro.message });

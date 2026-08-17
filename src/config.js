@@ -59,9 +59,20 @@ const config = {
   adminUsuario: textoObrigatorio('ADMIN_USUARIO', 'E o usuario do painel em /admin.'),
   adminSenha: textoObrigatorio('ADMIN_SENHA', 'E a senha do painel em /admin.'),
 
-  // Piso de espaco livre. Abaixo disso o upload passa a ser recusado (Fase 4);
-  // o painel ja mostra o numero para dar tempo de reagir durante a festa.
+  // Piso de espaco livre. Abaixo disso o upload e recusado com mensagem clara
+  // e alerta no log; o painel mostra o numero para dar tempo de reagir.
   discoMinimoGb: inteiro('DISCO_MINIMO_GB', 2),
+
+  // Rate limit do upload. O SPEC pedia 30 por IP a cada 15 minutos, mas se o
+  // salao tiver Wi-Fi proprio TODOS os convidados saem pelo mesmo IP publico
+  // e o album travaria na 31a foto da noite. 300 segura uma rajada de script
+  // sem barrar a festa. Configuravel para ajustar na hora, se precisar.
+  uploadsPorJanela: inteiro('UPLOADS_POR_JANELA', 300),
+  janelaRateLimitMin: inteiro('JANELA_RATE_LIMIT_MIN', 15),
+
+  // Liga HSTS e o upgrade para https. So faz sentido atras do Caddy com TLS —
+  // ligado em desenvolvimento, o navegador se recusaria a abrir via http.
+  tlsAtivo: texto('TLS_ATIVO', 'false') === 'true',
 
   dirDados,
   dirBanco: path.join(dirDados, 'album.db'),

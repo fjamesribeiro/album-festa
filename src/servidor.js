@@ -7,6 +7,7 @@ const express = require('express');
 
 const config = require('./config');
 const banco = require('./banco');
+const { seguranca } = require('./seguranca');
 const { exigirToken, NAO_ENCONTRADO } = require('./token');
 const rotasUpload = require('./rotas/upload');
 const rotasMidia = require('./rotas/midia');
@@ -51,6 +52,10 @@ const app = express();
 app.set('trust proxy', config.trustProxy);
 app.disable('x-powered-by');
 app.disable('etag');
+
+// Cabecalhos de seguranca antes de qualquer rota, para valerem inclusive nas
+// respostas de erro e nos 404.
+app.use(seguranca);
 
 app.get('/', exigirToken, (req, res) => {
   res.type('html').send(paginaConvidado);

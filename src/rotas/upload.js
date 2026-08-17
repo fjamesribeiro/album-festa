@@ -1,12 +1,12 @@
 'use strict';
 
 const crypto = require('node:crypto');
-const path = require('node:path');
 const express = require('express');
 const multer = require('multer');
 
 const config = require('../config');
 const { exigirToken } = require('../token');
+const { limitadorUploads, verificarDisco } = require('../limites');
 const { inserirFoto, contarPublicadas } = require('../banco');
 const { detectarFormato, gerarDerivadas, apagarSilencioso } = require('../imagem');
 
@@ -83,7 +83,9 @@ function validarTiradaEm(bruto) {
   const agora = new Date();
   const quando = new Date(ano, mes - 1, dia, hora, minuto, segundo);
   if (Number.isNaN(quando.getTime())) return null;
-  if (quando.getFullYear() !== ano || quando.getMonth() !== mes - 1 || quando.getDate() !== dia) return null;
+  if (quando.getFullYear() !== ano || quando.getMonth() !== mes - 1 || quando.getDate() !== dia) {
+    return null;
+  }
   if (ano < 2000) return null;
   // Um dia de folga cobre celular com fuso adiantado em relacao ao servidor.
   if (quando.getTime() > agora.getTime() + 24 * 60 * 60 * 1000) return null;
@@ -91,92 +93,107 @@ function validarTiradaEm(bruto) {
   return bruto.trim();
 }
 
-// O gate vem ANTES do multer: token errado e recusado sem que um byte de
-// arquivo chegue a tocar o disco.
-rotas.post('/api/upload', exigirToken, receberComTratamento, async (req, res) => {
-  const arquivos = req.files ?? [];
+// A ordem importa: token, rajada e espaco em disco sao conferidos ANTES do
+// multer. Assim nenhum byte de arquivo toca o disco numa requisicao que ja
+// estava condenada — e quando falta espaco, nao gravamos justamente o que
+// nao cabe.
+rotas.post(
+  '/api/upload',
+  exigirToken,
+  limitadorUploads,
+  verificarDisco,
+  receberComTratamento,
+  async (req, res) => {
+    const arquivos = req.files ?? [];
 
-  if (arquivos.length === 0) {
-    return res.status(400).json({
-      enviadas: [],
-      falhas: [{ nome: null, motivo: 'nenhuma foto chegou no envio' }],
-    });
-  }
-
-  // Nome do convidado e opcional e pode vir vazio.
-  const autorBruto = typeof req.body?.autor === 'string' ? req.body.autor.trim() : '';
-  const autor = autorBruto === '' ? null : autorBruto.slice(0, 80);
-
-  // Uma data por arquivo, na mesma ordem em que os arquivos chegaram: o campo
-  // tirada_em pode se repetir no multipart. O cliente manda um arquivo por
-  // requisicao, mas a rota aceita ate 10 e cada um tem a sua propria data.
-  // Sem data valida a foto entra assim mesmo — captura de tela e imagem
-  // baixada nao tem EXIF, e isso nao e motivo para recusar o envio.
-  const datasBrutas = req.body?.tirada_em;
-  const datas = (Array.isArray(datasBrutas) ? datasBrutas : [datasBrutas]).map(validarTiradaEm);
-
-  const enviadas = [];
-  const falhas = [];
-
-  for (let indice = 0; indice < arquivos.length; indice += 1) {
-    const arquivo = arquivos[indice];
-    const tiradaEm = datas[indice] ?? null;
-    const nomeOriginal = arquivo.originalname || 'foto';
-    const inicio = process.hrtime.bigint();
-    const id = crypto.randomUUID();
-
-    try {
-      // Magic bytes, nunca a extensao.
-      const formato = await detectarFormato(arquivo.path);
-      if (!formato) {
-        await apagarSilencioso(arquivo.path);
-        console.warn('[upload] arquivo recusado por formato', { nome: nomeOriginal, ip: req.ip });
-        falhas.push({ nome: nomeOriginal, motivo: 'esse arquivo não é uma foto JPEG ou PNG' });
-        continue;
-      }
-
-      const derivada = await gerarDerivadas(arquivo.path, id, formato, tiradaEm);
-
-      // Banco por ultimo: nunca deve existir linha sem arquivo em disco.
-      inserirFoto.run({
-        id,
-        autor,
-        bytes: derivada.bytes,
-        largura: derivada.largura,
-        altura: derivada.altura,
-        criado_em: new Date().toISOString(),
-        tirada_em: tiradaEm,
-        ip: req.ip ?? null,
+    if (arquivos.length === 0) {
+      return res.status(400).json({
+        enviadas: [],
+        falhas: [{ nome: null, motivo: 'nenhuma foto chegou no envio' }],
       });
-
-      const duracaoMs = Number((process.hrtime.bigint() - inicio) / 1000000n);
-      console.log('[upload] foto publicada', {
-        id,
-        autor,
-        bytes: derivada.bytes,
-        largura: derivada.largura,
-        altura: derivada.altura,
-        tirada_em: tiradaEm,
-        ip: req.ip,
-        duracao_ms: duracaoMs,
-      });
-
-      enviadas.push({ id, largura: derivada.largura, altura: derivada.altura });
-    } catch (erro) {
-      await apagarSilencioso(arquivo.path);
-      console.error('[upload] falha ao processar foto', {
-        id,
-        nome: nomeOriginal,
-        ip: req.ip,
-        erro: erro.message,
-        stack: erro.stack,
-      });
-      falhas.push({ nome: nomeOriginal, motivo: 'não consegui processar essa foto, tente de novo' });
     }
-  }
 
-  const { total } = contarPublicadas.get();
-  return res.json({ enviadas, falhas, total });
-});
+    // Nome do convidado e opcional e pode vir vazio.
+    const autorBruto = typeof req.body?.autor === 'string' ? req.body.autor.trim() : '';
+    const autor = autorBruto === '' ? null : autorBruto.slice(0, 80);
+
+    // Uma data por arquivo, na mesma ordem em que os arquivos chegaram: o
+    // campo tirada_em pode se repetir no multipart. O cliente manda um arquivo
+    // por requisicao, mas a rota aceita ate 10 e cada um tem a sua propria
+    // data. Sem data valida a foto entra assim mesmo — captura de tela e
+    // imagem baixada nao tem EXIF, e isso nao e motivo para recusar o envio.
+    const datasBrutas = req.body?.tirada_em;
+    const datas = (Array.isArray(datasBrutas) ? datasBrutas : [datasBrutas]).map(validarTiradaEm);
+
+    const enviadas = [];
+    const falhas = [];
+
+    for (let indice = 0; indice < arquivos.length; indice += 1) {
+      const arquivo = arquivos[indice];
+      const tiradaEm = datas[indice] ?? null;
+      const nomeOriginal = arquivo.originalname || 'foto';
+      const inicio = process.hrtime.bigint();
+      const id = crypto.randomUUID();
+
+      try {
+        // Magic bytes, nunca a extensao.
+        const formato = await detectarFormato(arquivo.path);
+        if (!formato) {
+          await apagarSilencioso(arquivo.path);
+          console.warn('[upload] arquivo recusado por formato', {
+            nome: nomeOriginal,
+            ip: req.ip,
+          });
+          falhas.push({ nome: nomeOriginal, motivo: 'esse arquivo não é uma foto JPEG ou PNG' });
+          continue;
+        }
+
+        const derivada = await gerarDerivadas(arquivo.path, id, formato, tiradaEm);
+
+        // Banco por ultimo: nunca deve existir linha sem arquivo em disco.
+        inserirFoto.run({
+          id,
+          autor,
+          bytes: derivada.bytes,
+          largura: derivada.largura,
+          altura: derivada.altura,
+          criado_em: new Date().toISOString(),
+          tirada_em: tiradaEm,
+          ip: req.ip ?? null,
+        });
+
+        const duracaoMs = Number((process.hrtime.bigint() - inicio) / 1000000n);
+        console.log('[upload] foto publicada', {
+          id,
+          autor,
+          bytes: derivada.bytes,
+          largura: derivada.largura,
+          altura: derivada.altura,
+          tirada_em: tiradaEm,
+          ip: req.ip,
+          duracao_ms: duracaoMs,
+        });
+
+        enviadas.push({ id, largura: derivada.largura, altura: derivada.altura });
+      } catch (erro) {
+        await apagarSilencioso(arquivo.path);
+        console.error('[upload] falha ao processar foto', {
+          id,
+          nome: nomeOriginal,
+          ip: req.ip,
+          erro: erro.message,
+          stack: erro.stack,
+        });
+        falhas.push({
+          nome: nomeOriginal,
+          motivo: 'não consegui processar essa foto, tente de novo',
+        });
+      }
+    }
+
+    const { total } = contarPublicadas.get();
+    return res.json({ enviadas, falhas, total });
+  }
+);
 
 module.exports = rotas;
