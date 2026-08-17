@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12101a">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Moderação — Álbum da festa</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <header class="cabecalho">
+    <h1>Moderação</h1>
+    <div class="resumo" id="resumo">
+      <span class="chip" id="chip-publicadas">— publicadas</span>
+      <span class="chip chip-oculta" id="chip-ocultas">— ocultas</span>
+      <span class="chip" id="chip-disco">— livre</span>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <p class="dica">
+      Toque na foto para ocultar ou reexibir. As ocultas ficam escurecidas e
+      somem da galeria dos convidados na próxima atualização.
+    </p>
+
+    <p id="aviso" class="aviso" role="alert" hidden></p>
+
+    <div id="vazio" class="vazio" hidden>Nenhuma foto enviada ainda.</div>
+
+    <div id="grade" class="grade"></div>
+    <div id="sentinela" class="sentinela" aria-hidden="true"></div>
+  </main>
+
+  <div class="barra-inferior">
+    <a class="botao-baixar" id="baixar" href="/admin/zip">Baixar tudo (.zip)</a>
+  </div>
+
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

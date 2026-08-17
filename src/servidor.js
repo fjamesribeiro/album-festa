@@ -11,6 +11,7 @@ const { exigirToken, NAO_ENCONTRADO } = require('./token');
 const rotasUpload = require('./rotas/upload');
 const rotasMidia = require('./rotas/midia');
 const rotasFotos = require('./rotas/fotos');
+const rotasAdmin = require('./rotas/admin');
 
 const DIR_PUBLICO = path.join(__dirname, '..', 'publico');
 
@@ -65,6 +66,7 @@ app.use(
   })
 );
 
+app.use(rotasAdmin);
 app.use(rotasFotos);
 app.use(rotasUpload);
 app.use(rotasMidia);

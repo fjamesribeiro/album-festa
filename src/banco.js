@@ -81,6 +81,50 @@ const listarAposCursor = banco.prepare(`
    LIMIT @limite
 `);
 
+// --- Consultas do painel de moderacao --------------------------------------
+
+// O admin ve tudo, inclusive o que esta oculto — e precisa saber qual e qual.
+// O ip continua fora: nem no painel ele serve para alguma coisa, e o que nao
+// sai da consulta nao vaza por descuido de rota depois.
+const CAMPOS_ADMIN = `${CAMPOS_PUBLICOS}, hidden`;
+
+const listarTodasPrimeiraPagina = banco.prepare(`
+  SELECT ${CAMPOS_ADMIN}
+    FROM fotos
+   ORDER BY criado_em DESC, id DESC
+   LIMIT @limite
+`);
+
+const listarTodasAposCursor = banco.prepare(`
+  SELECT ${CAMPOS_ADMIN}
+    FROM fotos
+   WHERE criado_em < @criado_em OR (criado_em = @criado_em AND id < @id)
+   ORDER BY criado_em DESC, id DESC
+   LIMIT @limite
+`);
+
+const contarPorVisibilidade = banco.prepare(`
+  SELECT
+    COUNT(*) AS total,
+    SUM(CASE WHEN hidden = 0 THEN 1 ELSE 0 END) AS publicadas,
+    SUM(CASE WHEN hidden = 1 THEN 1 ELSE 0 END) AS ocultas
+  FROM fotos
+`);
+
+const buscarFoto = banco.prepare(`SELECT ${CAMPOS_ADMIN} FROM fotos WHERE id = ?`);
+
+// Alterna num comando so: ler e depois gravar abriria espaco para dois toques
+// rapidos no celular se anularem.
+const alternarVisibilidade = banco.prepare(
+  'UPDATE fotos SET hidden = 1 - hidden WHERE id = ?'
+);
+
+// Todos os originais, para o ZIP. Ordem cronologica crescente para o arquivo
+// sair na ordem em que a festa aconteceu.
+const listarParaZip = banco.prepare(
+  'SELECT id, hidden, criado_em, tirada_em FROM fotos ORDER BY criado_em ASC, id ASC'
+);
+
 // Fecha o banco de forma limpa no shutdown, senao o WAL fica pendente.
 function fechar() {
   try {
@@ -96,5 +140,11 @@ module.exports = {
   contarPublicadas,
   listarPrimeiraPagina,
   listarAposCursor,
+  listarTodasPrimeiraPagina,
+  listarTodasAposCursor,
+  contarPorVisibilidade,
+  buscarFoto,
+  alternarVisibilidade,
+  listarParaZip,
   fechar,
 };

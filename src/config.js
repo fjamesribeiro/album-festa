@@ -54,6 +54,15 @@ const config = {
     'E o segredo que da acesso ao album, usado em /?k=TOKEN e no QR code da mesa.'
   ),
 
+  // Painel de moderacao. Obrigatorias pelo mesmo motivo do token: um /admin
+  // sem senha e pior do que nao ter admin nenhum.
+  adminUsuario: textoObrigatorio('ADMIN_USUARIO', 'E o usuario do painel em /admin.'),
+  adminSenha: textoObrigatorio('ADMIN_SENHA', 'E a senha do painel em /admin.'),
+
+  // Piso de espaco livre. Abaixo disso o upload passa a ser recusado (Fase 4);
+  // o painel ja mostra o numero para dar tempo de reagir durante a festa.
+  discoMinimoGb: inteiro('DISCO_MINIMO_GB', 2),
+
   dirDados,
   dirBanco: path.join(dirDados, 'album.db'),
   dirMidia: path.join(dirDados, 'midia'),

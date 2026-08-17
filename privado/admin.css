@@ -1,0 +1,199 @@
+/* Painel de moderacao. Usado no celular, durante a festa, no escuro: alvos
+   grandes, estado visivel de relance, nenhuma confirmacao no caminho. */
+
+* { box-sizing: border-box; }
+
+:root {
+  --fundo: #12101a;
+  --superficie: #1e1b2b;
+  --borda: #322d45;
+  --texto: #f4f2f8;
+  --texto-suave: #a9a3bd;
+  --destaque: #b388ff;
+  --destaque-escuro: #7c4dff;
+  --erro: #ff8a80;
+  --alerta: #ffcc66;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  padding-top: 108px;
+}
+
+.cabecalho {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background: rgba(18, 16, 26, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--borda);
+}
+
+.cabecalho h1 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.resumo { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.chip {
+  padding: 5px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: var(--superficie);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-oculta { color: var(--texto-suave); }
+
+/* Disco apertado nao pode passar despercebido no meio da festa. */
+.chip.apertado {
+  color: #2a1400;
+  background: var(--alerta);
+  border-color: var(--alerta);
+}
+
+.conteudo {
+  padding: 14px 12px calc(96px + env(safe-area-inset-bottom));
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.dica {
+  margin: 0 0 14px;
+  color: var(--texto-suave);
+  font-size: 0.88rem;
+}
+
+.aviso {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--erro);
+  font-size: 0.9rem;
+}
+
+.vazio {
+  margin: 32px 0;
+  padding: 28px 20px;
+  text-align: center;
+  border: 1px dashed var(--borda);
+  border-radius: 16px;
+  color: var(--texto-suave);
+}
+
+/* --- Grid ---------------------------------------------------------------- */
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 6px;
+}
+
+.celula {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--superficie);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.celula img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+/* Oculta: apagada e sem cor, impossivel de confundir com publicada mesmo de
+   relance e no escuro. */
+.celula.oculta { border-color: var(--erro); }
+.celula.oculta img { opacity: 0.32; filter: grayscale(1); }
+
+.selo {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--erro);
+  color: #2a0b08;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.celula:not(.oculta) .selo { display: none; }
+
+/* Enquanto o servidor nao respondeu, a celula fica meio transparente para o
+   admin saber que o toque foi registrado. */
+.celula.pendente { opacity: 0.5; }
+
+.celula:focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+
+.lupa {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(10, 8, 16, 0.72);
+  color: #fff;
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sentinela { height: 1px; }
+
+/* --- Rodape -------------------------------------------------------------- */
+
+.barra-inferior {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--fundo) 72%, transparent);
+}
+
+.botao-baixar {
+  display: block;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--destaque-escuro);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
