@@ -1,0 +1,53 @@
+# Album da festa. O nginx que ja roda na VPS termina o TLS e repassa para ca.
+services:
+  album:
+    build: .
+    image: album-festa
+    container_name: album-festa
+
+    # Volta sozinho depois de queda do processo ou reboot da VPS.
+    restart: unless-stopped
+
+    # SO no loopback. O container nunca fica exposto na internet: quem fala
+    # com o mundo e o nginx, que repassa para 127.0.0.1:3000.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    env_file:
+      - .env
+
+    environment:
+      # Atras do nginx local, o IP real do convidado chega no X-Forwarded-For.
+      TRUST_PROXY: loopback
+      # O nginx serve https, entao a aplicacao pode emitir HSTS.
+      TLS_ATIVO: "true"
+      DIR_DADOS: /app/dados
+
+    # Um unico ponto cobre banco e midia, como manda o SPEC. Bind mount em vez
+    # de volume nomeado para o backup ser um tar de pasta comum, sem precisar
+    # entrar no container para copiar arquivo.
+    volumes:
+      - ./dados:/app/dados
+
+    healthcheck:
+      # A raiz sem token responde 404 de proposito; o que importa e o processo
+      # estar de pe e respondendo HTTP.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(()=>process.exit(0)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    # A VPS tem 2 vCPU e roda outra aplicacao em producao. Sem teto, um pico de
+    # uploads deixaria o outro site sem CPU.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1g
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

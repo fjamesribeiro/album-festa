@@ -25,7 +25,9 @@ O evento é único e tem data marcada. Isso define todas as prioridades abaixo.
 - `multer` para multipart, `sharp` para derivadas de imagem
 - Frontend: HTML, CSS e JavaScript puros. **Sem React, sem framework, sem build
   step.** São duas telas.
-- Caddy como reverse proxy (TLS automático)
+- Reverse proxy: **nginx** (era Caddy no plano original). A VPS já servia
+  `movibes.pro` por nginx nas portas 80/443; trocar o proxy de um site em
+  produção para acomodar o álbum seria risco desproporcional. TLS pelo certbot.
 - Deploy: Docker Compose na VPS
 
 Evite dependências novas. Cada pacote a mais é uma superfície de falha. Se

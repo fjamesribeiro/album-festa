@@ -145,8 +145,13 @@ publicadas e ocultas, e espaço em disco livre.
 
 ## 9. Operação
 
-- `docker-compose.yml` com `restart: unless-stopped`
-- `Caddyfile` com TLS automático
+- `docker-compose.yml` com `restart: unless-stopped`, container escutando
+  apenas em `127.0.0.1:3000`
+- **Reverse proxy: nginx, não Caddy.** A VPS já roda `movibes.pro` (Django atrás
+  de nginx/1.24.0) ocupando as portas 80 e 443. Subir o Caddy tiraria esse site
+  do ar. O álbum ganha um `server` novo no nginx existente
+  (`deploy/nginx-album.conf`), com certificado pelo certbot para
+  `srv1325413.hstgr.cloud`. Nenhuma configuração do `movibes.pro` é tocada.
 - `.env.example` completo e comentado
 - script de backup diário: `tar` da pasta de dados + cópia do SQLite
 - `README.md` curto: subir local, subir na VPS, gerar o QR code, baixar tudo
