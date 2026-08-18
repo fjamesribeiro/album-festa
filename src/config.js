@@ -46,6 +46,9 @@ const config = {
   // Aparece no cabecalho da pagina do convidado.
   nomeAniversariante: texto('NOME_ANIVERSARIANTE', 'a aniversariante'),
 
+  // Linha de baixo da plaquinha na pagina do convidado.
+  subtitulo: texto('SUBTITULO', '15 anos'),
+
   // Unica coisa entre o album e a internet inteira. Obrigatoria de proposito:
   // um album que sobe desprotegido porque alguem esqueceu de definir a
   // variavel e falha silenciosa, e o pior lugar para descobrir isso e a festa.

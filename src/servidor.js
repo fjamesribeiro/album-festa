@@ -29,7 +29,8 @@ function escaparHtml(texto) {
 
 const paginaConvidado = fs
   .readFileSync(path.join(DIR_PUBLICO, 'index.html'), 'utf8')
-  .replaceAll('{{NOME_ANIVERSARIANTE}}', escaparHtml(config.nomeAniversariante));
+  .replaceAll('{{NOME_ANIVERSARIANTE}}', escaparHtml(config.nomeAniversariante))
+  .replaceAll('{{SUBTITULO}}', escaparHtml(config.subtitulo));
 
 // Sobrou temporario de um upload interrompido por queda do processo? Limpa no
 // boot, senao o disco enche em silencio ao longo da festa.

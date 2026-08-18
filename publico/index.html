@@ -3,9 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#12101a">
+  <meta name="theme-color" content="#f6d9e1">
   <meta name="robots" content="noindex, nofollow">
   <title>Álbum da festa de {{NOME_ANIVERSARIANTE}}</title>
+  <!-- A fonte manuscrita e local: o CSP so aceita 'self' e a rede do salao nao
+       e confiavel. O preload cobre so o subconjunto latino, que e o que a
+       pagina realmente usa. -->
+  <link rel="preload" href="/fontes/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/estilo.css">
 </head>
 <body>
@@ -15,6 +19,21 @@
   </header>
 
   <main class="conteudo">
+    <div class="plaquinha">
+      <span class="plaquinha-nome">{{NOME_ANIVERSARIANTE}}</span>
+      <span class="plaquinha-idade">{{SUBTITULO}}</span>
+    </div>
+
+    <div id="vazio" class="vazio" hidden>
+      <p class="vazio-titulo">Ainda não tem nenhuma foto aqui</p>
+      <p>Que tal a sua ser a primeira? É só tocar no botão ali embaixo.</p>
+      <div class="molduras-vazias" aria-hidden="true">
+        <span class="moldura-vazia"></span>
+        <span class="moldura-vazia"></span>
+        <span class="moldura-vazia"></span>
+      </div>
+    </div>
+
     <label class="campo-nome">
       <span>Seu nome (opcional)</span>
       <input type="text" id="autor" maxlength="80" autocomplete="name"
@@ -29,11 +48,6 @@
     </button>
 
     <p id="aviso" class="aviso" role="alert" hidden></p>
-
-    <div id="vazio" class="vazio" hidden>
-      <p class="vazio-titulo">Ainda não tem nenhuma foto aqui</p>
-      <p>Que tal a sua ser a primeira? É só tocar no botão ali embaixo.</p>
-    </div>
 
     <div id="grade" class="grade"></div>
     <div id="sentinela" class="sentinela" aria-hidden="true"></div>
