@@ -48,11 +48,20 @@ New-NetFirewallHyperVRule -Name "AlbumFesta3000" -DisplayName "Album da Festa (3
 
 ## Subir na VPS
 
-Esta VPS **já roda outra aplicação** (`movibes.pro`, Django atrás de
-nginx/1.24.0) nas portas 80 e 443. Por isso o álbum **não** usa Caddy: ele sobe
-em Docker escutando apenas em `127.0.0.1:3000`, e o nginx que já existe ganha um
-`server` novo apontando para ele. Nada da configuração do `movibes.pro` é
-alterado.
+Esta VPS **já roda 12 containers em produção** — `movibes.pro` e `movibes.pro`
+de homologação (Django), n8n, Grafana, Loki, Postgres, MinIO, Evolution API e
+Redis — com nginx/1.24.0 na frente, ocupando as portas 80 e 443.
+
+Por isso duas adaptações ao plano original:
+
+- **nginx em vez de Caddy.** O Caddy precisaria das portas 80 e 443, que já são
+  do nginx. Trocar o proxy de vários sites em produção para acomodar um álbum de
+  festa seria risco desproporcional. O álbum ganha um `server` novo no nginx
+  existente; nenhuma configuração dos outros sites é tocada.
+- **Porta 3010, não 3000.** A 3000 já é do Grafana nesta máquina.
+
+O álbum sobe em Docker escutando apenas em `127.0.0.1:3010`, invisível para a
+internet: quem fala com o mundo é o nginx.
 
 > SSH desta VPS está na **porta 22022**, não na 22.
 
@@ -64,7 +73,7 @@ ssh -p 22022 root@103.199.184.110
 docker --version && docker compose version   # se faltar, passo 2
 systemctl is-enabled docker                  # precisa dizer "enabled"
 nginx -v
-ss -ltnp | grep -E ':(80|443|3000)'          # a 3000 tem que estar livre
+ss -ltnp | grep -E ':(80|443|3010)'          # a 3010 tem que estar livre
 df -h /                                      # espaço para as fotos
 ```
 
@@ -97,7 +106,7 @@ chown -R 1000:1000 dados
 
 docker compose up -d --build
 docker compose logs -f          # espere "[boot] album no ar"
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/    # 404 = certo
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3010/    # 404 = certo
 ```
 
 ### 5. nginx e certificado
@@ -209,7 +218,7 @@ depois de reboot da VPS. Se você parar com `docker compose down` ou
 | Sintoma | O que olhar |
 |---|---|
 | Convidado vê 404 na galeria | O `k=` da URL bate com o `ALBUM_TOKEN` do `.env`? |
-| "essa foto passa de 12 MB" | `MAX_ARQUIVO_MB` e `client_max_body_size` do nginx têm que ser iguais |
+| "essa foto passa de 12 MB" | `client_max_body_size` do nginx tem que ser **1 MB maior** que `MAX_ARQUIVO_MB`, para quem recusar ser a aplicação e a mensagem sair em português |
 | "o álbum ficou sem espaço" | `df -h /` — abaixo de `DISCO_MINIMO_GB` o upload é recusado de propósito |
 | "muita foto ao mesmo tempo" | Rate limit; suba `UPLOADS_POR_JANELA` e `docker compose up -d` |
 | Container sobe e morre | `docker compose logs`; quase sempre é permissão em `dados/` (veja o `chown`) |

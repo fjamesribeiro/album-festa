@@ -9,9 +9,10 @@ services:
     restart: unless-stopped
 
     # SO no loopback. O container nunca fica exposto na internet: quem fala
-    # com o mundo e o nginx, que repassa para 127.0.0.1:3000.
+    # com o mundo e o nginx, que repassa para 127.0.0.1:3010.
+    # 3010 e nao 3000: nesta VPS a 3000 ja e do Grafana.
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3010:3000"
 
     env_file:
       - .env
