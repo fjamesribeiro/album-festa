@@ -150,6 +150,8 @@ rotas.post(
 
         const derivada = await gerarDerivadas(arquivo.path, id, formato, tiradaEm);
 
+        const criadoEm = new Date().toISOString();
+
         // Banco por ultimo: nunca deve existir linha sem arquivo em disco.
         inserirFoto.run({
           id,
@@ -157,7 +159,7 @@ rotas.post(
           bytes: derivada.bytes,
           largura: derivada.largura,
           altura: derivada.altura,
-          criado_em: new Date().toISOString(),
+          criado_em: criadoEm,
           tirada_em: tiradaEm,
           ip: req.ip ?? null,
         });
@@ -174,7 +176,18 @@ rotas.post(
           duracao_ms: duracaoMs,
         });
 
-        enviadas.push({ id, largura: derivada.largura, altura: derivada.altura });
+        // Os mesmos campos que /api/fotos devolve. A grade insere a foto recem
+        // enviada sem recarregar a pagina, e antes daqui ela nascia sem autor
+        // nem data — o convidado mandava com o nome e nao via o proprio nome
+        // ao abrir a foto que acabara de mandar.
+        enviadas.push({
+          id,
+          autor,
+          largura: derivada.largura,
+          altura: derivada.altura,
+          criado_em: criadoEm,
+          tirada_em: tiradaEm,
+        });
       } catch (erro) {
         await apagarSilencioso(arquivo.path);
         console.error('[upload] falha ao processar foto', {

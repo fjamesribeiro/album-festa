@@ -17,12 +17,31 @@ function fotoAtual() {
   return lista[indice] ?? null;
 }
 
-function formatarData(tiradaEm) {
-  if (!tiradaEm) return '';
-  const partes = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(tiradaEm);
-  if (!partes) return '';
-  const [, ano, mes, dia, hora, minuto] = partes;
-  return `${dia}/${mes}/${ano} às ${hora}:${minuto}`;
+function doisDigitos(numero) {
+  return String(numero).padStart(2, '0');
+}
+
+function formatarData(foto) {
+  // tirada_em vem do EXIF em hora local do aparelho, sem fuso: formata como veio.
+  const partes = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(foto.tirada_em || '');
+  if (partes) {
+    const [, ano, mes, dia, hora, minuto] = partes;
+    return `${dia}/${mes}/${ano} às ${hora}:${minuto}`;
+  }
+
+  // Print de tela, foto recebida no WhatsApp ou imagem editada nao tem EXIF de
+  // captura — e isso vai ser boa parte do que os convidados mandam. Cair para a
+  // hora do envio e melhor que nao mostrar data nenhuma.
+  if (!foto.criado_em) return '';
+  const quando = new Date(foto.criado_em);
+  if (Number.isNaN(quando.getTime())) return '';
+
+  // criado_em e UTC. Sem converter, uma foto enviada as 23h da festa apareceria
+  // como 2h da manha do dia seguinte.
+  return (
+    `${doisDigitos(quando.getDate())}/${doisDigitos(quando.getMonth() + 1)}/${quando.getFullYear()}` +
+    ` às ${doisDigitos(quando.getHours())}:${doisDigitos(quando.getMinutes())}`
+  );
 }
 
 // Busca a foto vizinha em segundo plano. No 4G do salao, sem isso cada swipe
@@ -45,7 +64,7 @@ function desenhar() {
   elementos.imagem.alt = foto.autor ? `Foto enviada por ${foto.autor}` : 'Foto do álbum';
 
   const autor = foto.autor ? `enviada por ${foto.autor}` : '';
-  const data = formatarData(foto.tirada_em);
+  const data = formatarData(foto);
   elementos.legenda.textContent = [autor, data].filter(Boolean).join(' · ');
 
   elementos.baixar.href = urlMidia('orig', foto.id);
