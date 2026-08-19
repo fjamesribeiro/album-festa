@@ -8,3 +8,6 @@ backups/
 # Arte de origem (o fundo de 2,2 MB). So as versoes otimizadas em
 # publico/img/ vao para o git e para a VPS.
 arte/
+
+# Preferencias do editor, nao do projeto.
+.vscode/

@@ -34,12 +34,6 @@
       </div>
     </div>
 
-    <label class="campo-nome">
-      <span>Seu nome (opcional)</span>
-      <input type="text" id="autor" maxlength="80" autocomplete="name"
-             placeholder="pra gente saber quem mandou">
-    </label>
-
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <ul id="lista-falhas" class="falhas" hidden></ul>
@@ -53,10 +47,40 @@
     <div id="sentinela" class="sentinela" aria-hidden="true"></div>
   </main>
 
-  <button type="button" id="enviar" class="botao-enviar">
-    <span class="progresso-fundo" aria-hidden="true"><i id="progresso-barra"></i></span>
-    <span id="rotulo-enviar" class="rotulo-enviar">Enviar fotos</span>
-  </button>
+  <div class="barra-envio">
+    <p id="assinatura" class="assinatura" hidden>
+      enviando como <b id="assinatura-nome"></b>
+      <button type="button" id="trocar-nome" class="link-trocar">trocar</button>
+    </p>
+
+    <button type="button" id="enviar" class="botao-enviar">
+      <span class="progresso-fundo" aria-hidden="true"><i id="progresso-barra"></i></span>
+      <span id="rotulo-enviar" class="rotulo-enviar">Enviar fotos</span>
+    </button>
+  </div>
+
+  <!-- Pedido do nome no unico instante em que o convidado ja se decidiu: as
+       fotos estao escolhidas e ele quer manda-las. Aparece uma vez por
+       aparelho; depois o nome fica guardado. -->
+  <div id="cartao-nome" class="cartao-nome" role="dialog" aria-modal="true"
+       aria-labelledby="cartao-nome-titulo" hidden>
+    <form id="form-nome" class="cartao-nome-caixa">
+      <h2 id="cartao-nome-titulo" class="cartao-nome-titulo">Quem mandou?</h2>
+      <p id="cartao-nome-sub" class="cartao-nome-sub">
+        Assim a {{NOME_ANIVERSARIANTE}} sabe de quem é cada foto.
+      </p>
+
+      <input type="text" id="autor" class="cartao-nome-campo" maxlength="80"
+             autocomplete="name" enterkeyhint="send" placeholder="seu nome">
+
+      <button type="submit" id="confirmar-nome" class="botao-confirmar">
+        Enviar as fotos
+      </button>
+      <button type="button" id="pular-nome" class="botao-pular">
+        enviar sem meu nome
+      </button>
+    </form>
+  </div>
 
   <input type="file" id="arquivos" accept="image/*" multiple hidden>
 

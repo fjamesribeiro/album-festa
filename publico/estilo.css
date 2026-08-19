@@ -159,8 +159,9 @@ body.sem-rolagem { overflow: hidden; }
   padding: 18px 14px 0;
   max-width: 900px;
   margin: 0 auto;
-  /* Espaco para a ultima fileira do grid nao ficar sob o botao flutuante. */
-  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  /* Espaco para a ultima fileira do grid nao ficar sob a barra de envio, que
+     agora pode ter duas linhas: assinatura e botao. */
+  padding-bottom: calc(150px + env(safe-area-inset-bottom));
 }
 
 /* --- Plaquinha do nome -------------------------------------------------- */
@@ -272,37 +273,94 @@ body.sem-rolagem { overflow: hidden; }
 .moldura-vazia:nth-child(2) { width: 60px; height: 78px; }
 .moldura-vazia:nth-child(3) { transform: rotate(7deg); }
 
-/* --- Campo do nome ------------------------------------------------------ */
+/* --- Cartao do nome ----------------------------------------------------- */
 
-.campo-nome { display: block; margin-bottom: 14px; }
-
-.campo-nome span {
-  display: block;
-  margin-bottom: 6px;
-  padding-left: 2px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(60, 20, 40, 0.7);
+/* Aparece entre escolher as fotos e manda-las. Esse e o unico instante em que
+   o convidado ja se decidiu — pedir o nome antes disso era pedir a quem ainda
+   nao queria nada, e por isso ninguem preenchia. */
+.cartao-nome {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(74, 26, 48, 0.55);
+  backdrop-filter: blur(6px);
 }
 
-.campo-nome input {
+.cartao-nome[hidden] { display: none; }
+
+.cartao-nome-caixa {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid rgba(201, 150, 46, 0.55);
-  border-radius: 12px;
+  max-width: 380px;
+  padding: 24px 22px 18px;
+  border: 1px solid var(--vidro-borda);
+  border-radius: 20px;
   background: linear-gradient(180deg, #fffafc 0%, #fdeff3 100%);
-  color: var(--texto);
-  /* 16px ou maior evita o zoom automatico do Safari no foco. */
-  font-size: 16px;
-  box-shadow: 0 4px 14px rgba(74, 26, 48, 0.22);
+  box-shadow: 0 0 0 2px rgba(201, 150, 46, 0.55), 0 18px 44px rgba(45, 10, 40, 0.5);
+  text-align: center;
 }
 
-.campo-nome input::placeholder { color: #a98595; }
+.cartao-nome-titulo {
+  margin: 0 0 6px;
+  font-family: var(--fonte-titulo);
+  font-weight: 400;
+  font-size: 2.4rem;
+  line-height: 1.1;
+  color: var(--vinho);
+}
 
-.campo-nome input:focus {
-  outline: 2px solid var(--vinho);
-  outline-offset: 1px;
+.cartao-nome-sub {
+  margin: 0 0 16px;
+  font-size: 0.98rem;
+  color: var(--texto-suave);
+}
+
+.cartao-nome-campo {
+  width: 100%;
+  padding: 15px 16px;
+  border: 1px solid rgba(201, 150, 46, 0.6);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--texto);
+  text-align: center;
+  /* 16px ou maior evita o zoom automatico do Safari no foco. */
+  font-size: 17px;
+}
+
+.cartao-nome-campo::placeholder { color: #b08c9a; }
+.cartao-nome-campo:focus { outline: 2px solid var(--vinho); outline-offset: 1px; }
+
+.botao-confirmar {
+  width: 100%;
+  margin-top: 14px;
+  padding: 15px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(100deg, #3d1178 0%, #5b1ea8 45%, #7a2fc4 100%);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--ouro), 0 8px 20px rgba(45, 10, 40, 0.4);
+}
+
+/* Sair sem nome continua sendo um caminho de um toque. O nome e opcional de
+   verdade — o que mudou foi a hora de pedir, nao a obrigatoriedade. */
+.botao-pular {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 0.92rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* --- Recados ao convidado ----------------------------------------------- */
@@ -404,12 +462,51 @@ body.sem-rolagem { overflow: hidden; }
 
 /* O env(safe-area-inset-bottom) e obrigatorio: sem ele o botao fica atras da
    barra do Safari no iPhone. z-index acima de tudo, menos do lightbox. */
-.botao-enviar {
+/* Barra fixa em vez de botao fixo: assim a assinatura fica colada nele sem
+   nenhum numero magico de altura para desalinhar quando o texto mudar. */
+.barra-envio {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   bottom: calc(20px + env(safe-area-inset-bottom));
   z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* A barra so existe para posicionar: cliques atravessam para o grid. */
+  pointer-events: none;
+}
+
+.barra-envio > * { pointer-events: auto; }
+
+/* Confirma sob que nome a foto vai e da o caminho para corrigir, ja que o
+   cartao so aparece uma vez por aparelho. */
+.assinatura {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(74, 26, 48, 0.62);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.assinatura[hidden] { display: none; }
+.assinatura b { font-weight: 700; }
+
+.link-trocar {
+  margin-left: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ouro-claro);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.botao-enviar {
   min-width: 240px;
   max-width: calc(100vw - 40px);
   padding: 15px 40px;
